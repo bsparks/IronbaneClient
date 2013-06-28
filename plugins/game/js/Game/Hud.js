@@ -470,13 +470,13 @@ var HUDHandler = Class.extend({
         socketHandler.socket.emit('dropItem', {
             'itemID': itemNumber
         }, function(reply) {
+            console.log('dropItem REPLY: ', reply);
 
             if (!_.isUndefined(reply.errmsg)) {
                 hudHandler.MessageAlert(reply.errmsg);
 
                 // Teleport back!
                 TeleportElement('li' + startItem.id, 'ls' + startItem.slot);
-
                 return;
             }
 
@@ -492,7 +492,6 @@ var HUDHandler = Class.extend({
                     socketHandler.playerData.items.splice(i--, 1);
                 }
             }
-
 
             // If it was armor, update our appearance
             if (startItem.equipped) {
@@ -536,6 +535,15 @@ var HUDHandler = Class.extend({
                 }
 
                 return;
+            }
+
+            // a "good" response should include the server's items
+            if(reply.items) {
+                socketHandler.playerData.items = reply.items;
+                hudHandler.ReloadInventory();
+                hudHandler.UpdateEquippedItems();
+
+                soundHandler.Play(ChooseRandom(["bag1"]));
             }
 
             var switchItem = hudHandler.FindItemBySlot(slotNumber, inLoot);
@@ -1127,7 +1135,7 @@ var HUDHandler = Class.extend({
         }
 
         if (startdata.loggedIn) {
-            if (startdata.characterUsed === 0) {
+            if (startdata.characterUsed == 0) {
                 charSelect += '<button id="btnNewChar" class="ibutton' + (slotsLeft == 0 ? '_disabled' : '') + '" style="width:216px">Create Character</button>';
             } else {
 
@@ -1451,9 +1459,8 @@ var HUDHandler = Class.extend({
                     if (string == 'OK') {
 
                         $.post('gamehandler.php?action=getchars', function(data) {
-                           
-                            console.log(data);
                             eval(data);
+
                             startdata.loggedIn = true;
 
                             //hudHandler.EnableButtons(['btnConfirmLogin','btnBack']);
@@ -1608,8 +1615,9 @@ var HUDHandler = Class.extend({
             //   preload(['plugins/game/images/characters/base/skin/'+x+'_big.png']);
             // }
 
-            
-            var newChar = '<label for="ncname">Name</label><div class="spacersmall"></div><input type="text" id="ncname" class="iinput" style="width:305px" maxlength="12"><div id="charCustomizationContainer"><div id="charCustomizationButtonsLeft"></div><div id="charCustomizationPreview"></div><div id="charCustomizationButtonsRight"></div></div><button id="btnConfirmNewChar" class="ibutton_attention" style="width:150px">Create</button><button id="btnBackMainChar" class="ibutton" style="width:150px">Cancel</button>';
+            var newChar = '';
+
+            newChar += '<label for="ncname">Name</label><div class="spacersmall"></div><input type="text" id="ncname" class="iinput" style="width:305px" maxlength="12"><div id="charCustomizationContainer"><div id="charCustomizationButtonsLeft"></div><div id="charCustomizationPreview"></div><div id="charCustomizationButtonsRight"></div></div><button id="btnConfirmNewChar" class="ibutton_attention" style="width:150px">Create</button><button id="btnBackMainChar" class="ibutton" style="width:150px">Cancel</button>';
 
             $('#charSelect').html(newChar);
 
@@ -1793,7 +1801,7 @@ var HUDHandler = Class.extend({
                     chars.push(data);
 
                     charCount = chars.length;
-                    if (charCount > 0 && startdata.characterUsed === 0) startdata.characterUsed = chars[0].id;
+                    if (charCount > 0 && startdata.characterUsed == 0) startdata.characterUsed = chars[0].id;
 
                     hudHandler.MakeCharSelectionScreen();
                 });
@@ -1877,7 +1885,7 @@ var HUDHandler = Class.extend({
         if (!_.isUndefined(textArray[page - 2])) {
             $("#bookFooterLeft").html('<button id="bookPrevPage" class="ibutton_book" style="width:150px">Previous Page</button>');
             $("#bookPrevPage").click(function() {
-                hudHandler.ShowBook(text, page - 2);
+                hudHandler.ShowBook(text, page - 2)
             });
         } else {
             $("#bookFooterLeft").empty();
@@ -1885,7 +1893,7 @@ var HUDHandler = Class.extend({
         if (!_.isUndefined(textArray[page + 2])) {
             $("#bookFooterRight").html('<button id="bookNextPage" class="ibutton_book" style="width:150px">Next Page</button>');
             $("#bookNextPage").click(function() {
-                hudHandler.ShowBook(text, page + 2);
+                hudHandler.ShowBook(text, page + 2)
             });
         } else {
             $("#bookFooterRight").empty();

@@ -67,7 +67,7 @@ var SocketHandler = Class.extend({
             });
 
             this.socket.on('say', function(data) {
-                var unit = FindUnit(data.id);
+                var unit = FindUnit(data['id']);
 
                 if (unit) {
                     ironbane.unitList.push(new ChatBubble(unit, data['message']));
@@ -186,59 +186,58 @@ var SocketHandler = Class.extend({
 
 
             var template = null;
-            if ( data.id < 0 ) {
-                template = units[data.template];
-            }
-            else {
+            if (data['id'] < 0) {
+                template = units[data['template']];
+            } else {
                 template = {
-                    type:UnitTypeEnum.PLAYER
-                };
+                    type: UnitTypeEnum.PLAYER
+                }
             }
 
-            var unitname = data.id < 0 ? template.name : data.name;
+            var unitname = data['id'] < 0 ? template.name : data['name']
 
             switch (template.type) {
                 case UnitTypeEnum.MOVINGOBSTACLE:
-                    unit = new MovingObstacle(ConvertVector3(data.position), new THREE.Vector3(data.rotX, data.rotY, data.rotZ), data.id, data.param, data.metadata);
+                    unit = new MovingObstacle(ConvertVector3(data['position']), new THREE.Vector3(data['rotX'], data['rotY'], data['rotZ']), data['id'], data['param'], data['metadata']);
                     break;
                 case UnitTypeEnum.TRAIN:
-                    unit = new Train(ConvertVector3(data.position), new THREE.Vector3(data.rotX, data.rotY, data.rotZ), data.id, data.param, data.metadata);
+                    unit = new Train(ConvertVector3(data['position']), new THREE.Vector3(data['rotX'], data['rotY'], data['rotZ']), data['id'], data['param'], data['metadata']);
                     break;
                 case UnitTypeEnum.TOGGLEABLEOBSTACLE:
-                    unit = new ToggleableObstacle(ConvertVector3(data.position), new THREE.Vector3(data.rotX, data.rotY, data.rotZ), data.id, data.param, data.metadata);
+                    unit = new ToggleableObstacle(ConvertVector3(data['position']), new THREE.Vector3(data['rotX'], data['rotY'], data['rotZ']), data['id'], data['param'], data['metadata']);
                     break;
                 case UnitTypeEnum.LEVER:
-                    unit = new Lever(ConvertVector3(data.position), data.id, data.metadata);
+                    unit = new Lever(ConvertVector3(data['position']), data['id'], data['metadata']);
                     break;
                 case UnitTypeEnum.TELEPORTENTRANCE:
-                    unit = new TeleportEntrance(ConvertVector3(data.position), data.id, data.metadata);
+                    unit = new TeleportEntrance(ConvertVector3(data['position']), data['id'], data['metadata']);
                     break;
                 case UnitTypeEnum.TELEPORTEXIT:
-                    unit = new TeleportExit(ConvertVector3(data.position), data.id, data.metadata);
+                    unit = new TeleportExit(ConvertVector3(data['position']), data['id'], data['metadata']);
                     break;
                 case UnitTypeEnum.MUSICPLAYER:
-                    unit = new MusicPlayer(ConvertVector3(data.position), data.id, data.metadata);
+                    unit = new MusicPlayer(ConvertVector3(data['position']), data['id'], data['metadata']);
                     break;
                 case UnitTypeEnum.HEARTPIECE:
-                    unit = new HeartPiece(ConvertVector3(data.position), data.id);
+                    unit = new HeartPiece(ConvertVector3(data['position']), data['id']);
                     break;
                 case UnitTypeEnum.SIGN:
-                    unit = new Sign(ConvertVector3(data.position), new THREE.Vector3(data.rotX, data.rotY, data.rotZ), data.id, data.param, data.metadata);
+                    unit = new Sign(ConvertVector3(data['position']), new THREE.Vector3(data['rotX'], data['rotY'], data['rotZ']), data['id'], data['param'], data['metadata']);
                     break;
                 case UnitTypeEnum.LOOTABLE:
-                    if ( data.param < 10 ) {
-                      unit = new LootBag(ConvertVector3(data.position), data.id, data.param);
+                    if (data['param'] < 10) {
+                        unit = new LootBag(ConvertVector3(data['position']), data['id'], data['param']);
                     } else {
-                      unit = new LootableMesh(ConvertVector3(data.position), new THREE.Vector3(data.rotX, data.rotY, data.rotZ), data.id, data.param, data.metadata);
+                        unit = new LootableMesh(ConvertVector3(data['position']), new THREE.Vector3(data['rotX'], data['rotY'], data['rotZ']), data['id'], data['param'], data['metadata']);
                     }
                     break;
                 default:
                     // return;
-                    unit = new Fighter(ConvertVector3(data.position), new THREE.Vector3(0, data.rotY, 0), data.id, unitname, data.param, data['size'], data['health'], data['armor'], data['healthMax'], data['armorMax']);
+                    unit = new Fighter(ConvertVector3(data['position']), new THREE.Vector3(0, data['rotY'], 0), data['id'], unitname, data['param'], data['size'], data['health'], data['armor'], data['healthMax'], data['armorMax']);
                     break;
             }
 
-            if ( data.id < 0 ) {
+            if (data['id'] < 0) {
                 unit.template = template;
             }
 
@@ -283,7 +282,7 @@ var SocketHandler = Class.extend({
         this.socket.on('doJump', function(data) {
             //if ( !socketHandler.loggedIn ) return;
 
-            var unit = FindUnit(data.id);
+            var unit = FindUnit(data['id']);
 
             unit.Jump();
 
@@ -294,7 +293,7 @@ var SocketHandler = Class.extend({
         // this.socket.on('foundHeartPiece', function (data) {
         //     //if ( !socketHandler.loggedIn ) return;
 
-        //     var unit = FindUnit(data.id);
+        //     var unit = FindUnit(data['id']);
 
         //     if ( unit == ironbane.player ) {
 
@@ -311,7 +310,7 @@ var SocketHandler = Class.extend({
         this.socket.on('toggle', function(data) {
             //if ( !socketHandler.loggedIn ) return;
 
-            var unit = FindUnit(data.id);
+            var unit = FindUnit(data['id']);
 
             if (unit && unit instanceof ToggleableObstacle) {
                 unit.Toggle(data['on']);
@@ -376,7 +375,7 @@ var SocketHandler = Class.extend({
         this.socket.on('updateClothes', function(data) {
             //if ( !socketHandler.loggedIn ) return;
 
-            var unit = FindUnit(data.id);
+            var unit = FindUnit(data['id']);
 
             unit.appearance.head = data['head'];
             unit.appearance.body = data['body'];
@@ -389,7 +388,7 @@ var SocketHandler = Class.extend({
         this.socket.on('updateWeapon', function(data) {
             //if ( !socketHandler.loggedIn ) return;
 
-            var unit = FindUnit(data.id);
+            var unit = FindUnit(data['id']);
 
             unit.UpdateWeapon(data['weapon']);
 
@@ -408,39 +407,18 @@ var SocketHandler = Class.extend({
         this.socket.on('lootFromBag', function(data) {
             // occurs when someone nearby loots from a bag
             // refresh the bag
-
-            var npcID = data;
+            console.log('lootFromBag REPLY:', data);
 
             if (ironbane.player.canLoot) {
-                // Make a request for the items and update the UI when we receive them
-                socketHandler.socket.emit('loot', npcID, function(reply) {
-                    if (ISDEF(reply.errmsg)) {
-                        hudHandler.MessageAlert(reply.errmsg);
-                        return;
-                    }
-
-                    if (ironbane.player.canLoot) {
-                        // Todo: remove the items via UI
-                        for (var i = 0; i < ironbane.player.lootItems.length; i++) {
-                            var lootItem = ironbane.player.lootItems[i];
-
-                            $('#li' + lootItem.id).remove();
-                        }
-
-                        ironbane.player.lootItems = [];
-                    }
-                    //if ( !socketHandler.loggedIn ) return;
-                    ironbane.player.lootItems = reply;
-                    hudHandler.MakeSlotItems(true);
-                });
+                // var npcID = data.bag;
+                ironbane.player.lootItems = data.loot;
+                hudHandler.MakeSlotItems(true);
             }
-
-
         });
 
         this.socket.on('respawn', function(data) {
 
-            var unit = FindUnit(data.id);
+            var unit = FindUnit(data['id']);
 
             if (unit) {
 
@@ -498,7 +476,7 @@ var SocketHandler = Class.extend({
         //            unit.SwingWeapon();
         //        });
         // this.socket.on('swingWeapon', function (data) {
-        //     var attacker = FindUnit(data.id);
+        //     var attacker = FindUnit(data['id']);
 
         //     var weapon = ISDEF(data.w) ? items[data.w] : null;
 
@@ -515,7 +493,7 @@ var SocketHandler = Class.extend({
         // });
 
         this.socket.on('setStat', function(data) {
-            var unit = FindUnit(data.id);
+            var unit = FindUnit(data['id']);
 
             if (unit) {
                 if (data['s'] == 'h') {
@@ -627,7 +605,7 @@ var SocketHandler = Class.extend({
 
             // Remove the unit from the list
             for (var i = 0; i < ironbane.unitList.length; i++) {
-                if (ironbane.unitList[i].id == data.id) {
+                if (ironbane.unitList[i].id == data['id']) {
                     ironbane.unitList[i].Destroy();
                     ironbane.unitList.splice(i, 1);
                     break;
@@ -778,7 +756,7 @@ var SocketHandler = Class.extend({
         this.socket.on('ppAddNode', function(data) {
             if (!showEditor) return;
 
-            nodeHandler.AddNode(0, data.id, ConvertVector3(data['pos']));
+            nodeHandler.AddNode(0, data['id'], ConvertVector3(data['pos']));
         });
 
         this.socket.on('ppAddEdge', function(data) {
@@ -790,7 +768,7 @@ var SocketHandler = Class.extend({
         this.socket.on('ppDeleteNode', function(data) {
             if (!showEditor) return;
 
-            nodeHandler.DeleteNode(0, data.id);
+            nodeHandler.DeleteNode(0, data['id']);
         });
 
 
