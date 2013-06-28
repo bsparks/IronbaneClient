@@ -470,13 +470,13 @@ var HUDHandler = Class.extend({
         socketHandler.socket.emit('dropItem', {
             'itemID': itemNumber
         }, function(reply) {
+            console.log('dropItem REPLY: ', reply);
 
             if (!_.isUndefined(reply.errmsg)) {
                 hudHandler.MessageAlert(reply.errmsg);
 
                 // Teleport back!
                 TeleportElement('li' + startItem.id, 'ls' + startItem.slot);
-
                 return;
             }
 
@@ -492,7 +492,6 @@ var HUDHandler = Class.extend({
                     socketHandler.playerData.items.splice(i--, 1);
                 }
             }
-
 
             // If it was armor, update our appearance
             if (startItem.equipped) {
@@ -536,6 +535,15 @@ var HUDHandler = Class.extend({
                 }
 
                 return;
+            }
+
+            // a "good" response should include the server's items
+            if(reply.items) {
+                socketHandler.playerData.items = reply.items;
+                hudHandler.ReloadInventory();
+                hudHandler.UpdateEquippedItems();
+
+                soundHandler.Play(ChooseRandom(["bag1"]));
             }
 
             var switchItem = hudHandler.FindItemBySlot(slotNumber, inLoot);
