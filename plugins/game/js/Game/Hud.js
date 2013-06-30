@@ -414,7 +414,7 @@ var HUDHandler = Class.extend({
             // because money bags may have been adjusted, entire inventory is sync'd up
             if (_.isArray(reply.items)) {
                 socketHandler.playerData.items = reply.items;
-                hudHandler.ReloadInventory();
+                //hudHandler.ReloadInventory();
                 hudHandler.MakeCoinBar(true);
 
                 // Remove the loot bag
@@ -541,7 +541,7 @@ var HUDHandler = Class.extend({
             // a "good" response should include the server's items
             if(reply.items) {
                 socketHandler.playerData.items = reply.items;
-                hudHandler.ReloadInventory();
+                //hudHandler.ReloadInventory();
                 hudHandler.UpdateEquippedItems();
 
                 soundHandler.Play(ChooseRandom(["bag1"]));
@@ -589,7 +589,7 @@ var HUDHandler = Class.extend({
             // because money bags may have been adjusted, entire inventory is sync'd up
             if (_.isArray(reply.items)) {
                 socketHandler.playerData.items = reply.items;
-                hudHandler.ReloadInventory();
+                //hudHandler.ReloadInventory();
                 hudHandler.MakeCoinBar(true);
             }
 

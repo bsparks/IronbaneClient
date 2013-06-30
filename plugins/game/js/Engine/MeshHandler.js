@@ -15,146 +15,117 @@
     along with Ironbane MMO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+IronbaneApp
+    .factory('MeshHandler', ['$log', '$cacheFactory', '$http', '$q',
+    function($log, $cacheFactory, $http, $q) {
 
-var MeshHandler = Class.extend({
-  Init: function() {
+        var meshCache = $cacheFactory('meshCache'),
+            geometryCache = $cacheFactory('geometryCache');
 
+        function loadMeshData(url) {
+            return $http.get(url, {
+                cache: meshCache
+            }).then(function(response) {
+                // pass the results along for now
+                return response.data;
+            }, function(err) {
+                return $q.reject('error loading model: ' + err);
+            });
+        }
 
-    this.geometries = {};
+        var handler = {
+            Load: function(model, callback, scale) {
+                if(geometryCache.get(model)) {
+                    callback.call(null, THREE.GeometryUtils.clone(geometryCache.get(model)));
+                    return;
+                }
 
+                loadMeshData(model).then(function(json) {
+                    var loader = new THREE.JSONLoader(),
+                        texturePath = loader.extractUrlBase(model),
+                        geoCallback = function(geometry) {
+                            geometryCache.put(model, geometry);
+                            callback.call(null, THREE.GeometryUtils.clone(geometry));
+                        };
 
-  },
-  Load: function(model, readyFunc, scale) {
+                    loader.createModel(json, geoCallback, texturePath, scale);
+                }, function(err) {
+                    $log.log('error getting mesh', model, err);
+                });
+            },
+            SpiceGeometry: function(geometry, rotation, metadata, meshData, param, drawNameMesh) {
+                var rotationMatrix = new THREE.Matrix4();
+                rotationMatrix.setRotationFromEuler(new THREE.Vector3(
+                    (rotation.x).ToRadians(), (rotation.y).ToRadians(), (rotation.z).ToRadians()
+                ));
 
-    if ( this.geometries[model] ) {
-      setTimeout(function() {
-        readyFunc(THREE.GeometryUtils.clone(meshHandler.geometries[model]));
-        // readyFunc(THREE.GeometryUtils.clone(meshHandler.geometries[model]));
-      }, 1000);
-      return;
-    }
+                for (var v = 0; v < geometry.vertices.length; v++) {
+                    geometry.vertices[v] = rotationMatrix.multiplyVector3(geometry.vertices[v]);
+                }
 
+                geometry.computeCentroids();
+                geometry.computeFaceNormals();
+                geometry.computeVertexNormals();
 
-    var jsonLoader = new THREE.JSONLoader();
+                geometry.dynamic = true;
 
+                var tiles = [],
+                    x = 0;
+                for (x = 1; x <= 10; x++) {
+                    if (angular.isDefined(metadata["t" + x])) {
+                        tiles.push("tiles/" + metadata["t" + x]);
+                    } else if (angular.isDefined(meshData["t" + x])) {
+                        tiles.push(meshData["t" + x]);
+                    } else {
+                        tiles.push(1);
+                    }
+                }
 
+                var uvscale = [];
+                for (x = 1; x <= 10; x++) {
+                    if (angular.isDefined(metadata["ts" + x])) {
+                        uvscale.push(new THREE.Vector2(parseFloat(metadata["ts" + x]), parseFloat(metadata["ts" + x])));
+                    } else if (ISDEF(meshData["ts" + x])) {
+                        uvscale.push(new THREE.Vector2(parseFloat(meshData["ts" + x]), parseFloat(meshData["ts" + x])));
+                    } else {
+                        uvscale.push(new THREE.Vector2(1, 1));
+                    }
+                }
 
-    jsonLoader.load( model, function( geometry ) {
-      meshHandler.geometries[model] = geometry;
-      readyFunc(THREE.GeometryUtils.clone(geometry));
-      // readyFunc(geometry);
-    }, null, scale);
+                var materials = [];
+                // Only push materials that are actually inside the materials
+                for (var i = 0; i < geometry.jsonMaterials.length; i++) {
+                  if (drawNameMesh) {
+                      materials.push(textureHandler.GetTexture('plugins/game/images/' + tiles[i] + '.png', false, {
+                          transparent: true,
+                          opacity: 0.5,
+                          seeThrough: true,
+                          alphaTest: 0.5,
+                          uvScaleX: uvscale[i].x,
+                          uvScaleY: uvscale[i].y
+                      }));
+                  } else {
+                      materials.push(textureHandler.GetTexture('plugins/game/images/' + tiles[i] + '.png', false, {
+                          transparent: meshData["transparent"] === 1,
+                          alphaTest: 0.1,
+                          useLighting: true
+                      }));
+                  }
 
+                  materials[i].shading = THREE.FlatShading;
+                }
 
+                geometry.materials = materials;
 
-  },
-  SpiceGeometry: function(geometry, rotation, metadata, meshData, param, drawNameMesh) {
+                return geometry;
+            },
+            '$meshCache': meshCache,
+            '$geometryCache': geometryCache
+        };
 
-
-
-
-    // Rotate geometry
-
-    var rotationMatrix = new THREE.Matrix4();
-    rotationMatrix.setRotationFromEuler(
-      new THREE.Vector3((rotation.x).ToRadians(),
-        (rotation.y).ToRadians(), (rotation.z).ToRadians()));
-
-    for(var v=0;v<geometry.vertices.length;v++) {
-      geometry.vertices[v] = rotationMatrix.multiplyVector3(geometry.vertices[v]);
-    }
-
-    geometry.computeCentroids();
-    geometry.computeFaceNormals();
-    geometry.computeVertexNormals();
-
-    geometry.dynamic = true;
-
-    var tiles = [];
-    for(var x=1;x<=10;x++){
-      if ( ISDEF(metadata["t"+x]) ) {
-        tiles.push("tiles/"+metadata["t"+x]);
-      }
-      else if ( ISDEF(meshData["t"+x]) ) {
-        tiles.push(meshData["t"+x]);
-      }
-      else {
-        tiles.push(1);
-      }
-    }
-
-    var uvscale = [];
-    for(var x=1;x<=10;x++){
-      if ( ISDEF(metadata["ts"+x]) ) {
-        uvscale.push(new THREE.Vector2(
-          parseFloat(metadata["ts"+x]),parseFloat(metadata["ts"+x])));
-      }
-      else if ( ISDEF(meshData["ts"+x]) ) {
-        uvscale.push(new THREE.Vector2(
-          parseFloat(meshData["ts"+x]),parseFloat(meshData["ts"+x])));
-      }
-      else {
-        uvscale.push(new THREE.Vector2(1,1));
-      }
-    }
-
-
-    var materials = [];
-
-    // Only push materials that are actually inside the materials
-    for (var i=0; i<geometry.jsonMaterials.length; i++) {
-
-      // // Check if there's a map inside the material, and if it contains a sourceFile
-      // if ( !_.isUndefined(geometry.jsonMaterials[i]["mapDiffuse"]) && tiles[i] === "tiles/1" ) {
-      //   // Extract the tile!
-      //   tiles[i] = "tiles/"+(geometry.jsonMaterials[i]["mapDiffuse"].split("."))[0];
-      // }
-
-      if ( drawNameMesh ) {
-        materials.push(textureHandler.GetTexture('plugins/game/images/'+tiles[i] + '.png', false, {
-          transparent:true,
-          opacity:0.5,
-          seeThrough:true,
-          alphaTest:0.5,
-          uvScaleX:uvscale[i].x,
-          uvScaleY:uvscale[i].y
-        }));
-      }
-      else {
-        materials.push(textureHandler.GetTexture('plugins/game/images/'+tiles[i] + '.png', false, {
-          transparent:meshData["transparent"] === 1,
-          alphaTest:0.1,
-          useLighting:true
-        }));
-      }
-
-      materials[i].shading = THREE.FlatShading;
-
-    //materials.push(new THREE.MeshBasicMaterial({color:Math.random() * 0xffffff}));
-
-    //materials[i].wireframe = true;
-    }
-
-    // De-allocate the old materials
-    //        _.each(geometry.materials, function(material) {
-    //          material.deallocate();
-    //          ironbane.renderer.deallocateMaterial( material );
-    //        });
-
-    geometry.materials = materials;
-
-    return geometry;
-  },
-  BuildMesh: function(geometry, meshData) {
-
-
-  },
-  Tick: function(dTime) {
-
-
-
-  }
-});
-
-
-var meshHandler = new MeshHandler();
+        return handler;
+    }])
+    .run(['MeshHandler', '$log', function(MeshHandler, $log) {
+        $log.log('super hack!');
+        window.meshHandler = MeshHandler;
+    }]);

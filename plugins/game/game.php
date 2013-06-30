@@ -293,9 +293,14 @@ $ironbane_root_directory = explode("/", $_SERVER['REQUEST_URI']);
 array_pop($ironbane_root_directory);
 $ironbane_root_directory = implode("/", $ironbane_root_directory)."/";
 
-$c_footer .= '
-	<script>
-	var startdata = {
+$use_simple_rendering = 1;
+
+$c_main = file_get_contents("plugins/game/shaders.html");
+$c_main .= file_get_contents("plugins/game/frame.html");
+
+$c_main .= '
+    <script>
+    var startdata = {
         loggedIn: ' . ($s_auth ? 'true' : 'false') . ',
 
         characterUsed: 0,
@@ -303,17 +308,17 @@ $c_footer .= '
         using_ie: ' . $using_ie . ',
         using_safari: ' . $using_safari . ',
 
-	};
+    };
 
     var ironbane_hostname = "'.$ironbane_hostname.'";
     var ironbane_port = '.$ironbane_port.';
     var ironbane_root_directory = "'.$ironbane_root_directory.'";
 
-	var hquote = "' . $hermesquote . '";
+    var hquote = "' . $hermesquote . '";
 
     var isEditor = '.($userdata["editor"] ? "true" : "false").';
 
-	var debugging = ' . (($userdata["admin"] || isset($_GET["debug"])) ? "true" : "false") . ';
+    var debugging = ' . (($userdata["admin"] || isset($_GET["debug"])) ? "true" : "false") . ';
     //debugging=false;
 
     var items = {};
@@ -323,16 +328,16 @@ $c_footer .= '
         ' . ($preUnitTemplates) . '
     };
 
-	var chars = [];
+    var chars = [];
 
-	var charCount = 0;
+    var charCount = 0;
 
-	var preCatsTiles = [];
-	' . ($preCatsTilesLoad) . '
+    var preCatsTiles = [];
+    ' . ($preCatsTilesLoad) . '
 
-	var zones = {};
+    var zones = {};
     var zoneSelection = {};
-	' . ($preZonesLoad) . '
+    ' . ($preZonesLoad) . '
 
     var preMeshes = ' . $preMeshes . '
 
@@ -344,23 +349,17 @@ $c_footer .= '
 
     var newsPosts = \''.($newsPosts).'\';
 
-	</script>';
-
+    </script>';
 
 foreach ($externals as $value) {
-    $c_footer .= '
+    $c_main .= '
     <script src="plugins/game/js/' . $value . '.js" type="text/javascript"></script>';
 }
 
 
 foreach ($internals as $value) {
-    $c_footer .= '
-	<script src="plugins/game/js/' . $value . '.js" type="text/javascript"></script>';
+    $c_main .= '
+    <script src="plugins/game/js/' . $value . '.js" type="text/javascript"></script>';
 }
-
-$use_simple_rendering = 1;
-
-$c_main = file_get_contents("plugins/game/shaders.html");
-$c_main .= file_get_contents("plugins/game/frame.html");
 
 ?>

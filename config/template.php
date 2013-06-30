@@ -105,7 +105,7 @@ $template = ''.$doctype.'
 
 '.$google.'
 </head>
-<body>
+<body ng-app="Ironbane">
 '.$c_header.'
 '.$c_main.'
 '.$c_footer.'
