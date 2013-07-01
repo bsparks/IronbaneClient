@@ -16,12 +16,13 @@
 */
 
 var CameraStatusEnum = {
-    ThirdPerson: "ThirdPerson",
-    ThirdPersonToFirstPersonTransition: "ThirdPersonToFirstPersonTransition",
-    FirstPerson: "FirstPerson"
+  ThirdPerson: "ThirdPerson",
+  ThirdPersonToFirstPersonTransition: "ThirdPersonToFirstPersonTransition",
+  FirstPerson: "FirstPerson"
 };
 
 var Player = Fighter.extend({
+<<<<<<< Updated upstream
     Init: function(position, rotation, id, name) {
         this._super(position, rotation, id, name, 0,
             socketHandler.playerData.size, socketHandler.playerData.health, socketHandler.playerData.armor,
@@ -63,133 +64,170 @@ var Player = Fighter.extend({
         // this.targetAimHelperTexture = "";
         this.aimHelperMesh = null;
         this.aimHelperMeshPosition = new THREE.Vector3();
+=======
+  Init: function(position, rotation, id, name) {
+    this._super(position, rotation, id, name, 0,
+      socketHandler.playerData.size, socketHandler.playerData.health, socketHandler.playerData.armor,
+      socketHandler.playerData.healthMax, socketHandler.playerData.armorMax);
 
-        this.currentZoneMusic = null;
+    this.drawNameMesh = false;
+    this.originalThirdPersonReference = new THREE.Vector3(0, 2.5, -4);
+    ironbane.camera.position.copy(position.clone().addSelf(new THREE.Vector3(0, 1, 0)));
+    this.thirdPersonReference = this.originalThirdPersonReference.clone();
+    this.targetSize = socketHandler.playerData.size;
+    this.sendDataTimeout = 0.0;
+    this.canMove = true;
+    this.canLoot = false;
+    this.lootItems = [];
+    this.lootUnit = null;
+    this.cameraStatus = CameraStatusEnum.ThirdPerson;
 
-        if ( showEditor ) {
-            this.enableGravity = !levelEditor.editorGUI.chFlyMode;
-        }
+    (function(unit) {
+      setTimeout(function() {
+        hudHandler.MakeHealthBar();
+        hudHandler.MakeArmorBar();
+        hudHandler.MakeCoinBar();
+      }, 0);
+    })(this);
 
-        this.mouseRayCastCheckTimeout = 0.0;
+    this.CheckForItemsBeforeMakingImage();
 
-        this.localRotationY = rotation.y;
+    // Reddish glow that follows the mouse
+    this.aimTexture = "";
+    this.targetAimTexture = "";
+    this.aimMesh = null;
+    this.aimMeshPosition = new THREE.Vector3();
 
-        this.isLookingAround = false;
+    // Secondary helper
+    this.aimHelperTexture = "";
+    // this.targetAimHelperTexture = "";
+    this.aimHelperMesh = null;
+    this.aimHelperMeshPosition = new THREE.Vector3();
+>>>>>>> Stashed changes
 
-        this.onChangeZone(terrainHandler.zone);
-    },
-    getTotalCoins: function() {
-        //console.log('getTotalCoins', socketHandler.playerData.items);
+    this.currentZoneMusic = null;
 
-        // sum value of cash items in inventory
-        return _.reduce(_.pluck(_.where(socketHandler.playerData.items, {
-            type: 'cash'
-        }), 'value'), function(memo, num) {
-            return memo + num;
-        }, 0);
-    },
-    CheckForItemsBeforeMakingImage: function() {
-        if (socketHandler.playerData.items === null) {
-            setTimeout(function() {
-                ironbane.player.CheckForItemsBeforeMakingImage();
-            }, 1000);
-        } else {
-            this.UpdateAppearance();
-            var weapon = this.GetEquippedWeapon();
+    if (showEditor) {
+      this.enableGravity = !levelEditor.editorGUI.chFlyMode;
+    }
 
-            if (weapon) {
-                var template = items[weapon['template']];
-                this.UpdateWeapon(template['id']);
-            }
-        }
-    },
-    Destroy: function() {
-        //$('#loadingBar').show();
-        this.DestroyAimMesh();
-        this.DestroyAimHelperMesh();
+    this.mouseRayCastCheckTimeout = 0.0;
 
-        this._super();
-    },
+    this.localRotationY = rotation.y;
+
+    this.isLookingAround = false;
+
+    this.onChangeZone(terrainHandler.zone);
+  },
+  getTotalCoins: function() {
+    //console.log('getTotalCoins', socketHandler.playerData.items);
+
+    // sum value of cash items in inventory
+    return _.reduce(_.pluck(_.where(socketHandler.playerData.items, {
+      type: 'cash'
+    }), 'value'), function(memo, num) {
+      return memo + num;
+    }, 0);
+  },
+  CheckForItemsBeforeMakingImage: function() {
+    if (socketHandler.playerData.items === null) {
+      setTimeout(function() {
+        ironbane.player.CheckForItemsBeforeMakingImage();
+      }, 1000);
+    } else {
+      this.UpdateAppearance();
+      var weapon = this.GetEquippedWeapon();
+
+      if (weapon) {
+        var template = items[weapon['template']];
+        this.UpdateWeapon(template['id']);
+      }
+    }
+  },
+  Destroy: function() {
+    //$('#loadingBar').show();
+    this.DestroyAimMesh();
+    this.DestroyAimHelperMesh();
+
+    this._super();
+  },
   DestroyAimMesh: function() {
-    if ( this.aimMesh ) {
+    if (this.aimMesh) {
       ironbane.scene.remove(this.aimMesh);
 
       this.aimMesh.deallocate();
       this.aimMesh.geometry.deallocate();
       this.aimMesh.material.deallocate();
 
-      ironbane.renderer.deallocateObject( this.aimMesh );
+      ironbane.renderer.deallocateObject(this.aimMesh);
 
     }
   },
   DestroyAimHelperMesh: function() {
-    if ( this.aimHelperMesh ) {
+    if (this.aimHelperMesh) {
       ironbane.scene.remove(this.aimHelperMesh);
 
       this.aimHelperMesh.deallocate();
       this.aimHelperMesh.geometry.deallocate();
       this.aimHelperMesh.material.deallocate();
 
-      ironbane.renderer.deallocateObject( this.aimHelperMesh );
+      ironbane.renderer.deallocateObject(this.aimHelperMesh);
 
     }
   },
   onChangeZone: function(newZone) {
 
     // Hack for Ironbane's Chamber "spooky cam"
-    if ( newZone === 7 ) {
+    if (newZone === 7) {
       this.originalThirdPersonReference.set(0, 0.8, -4).multiplyScalar(1.5);
       this.thirdPersonReference
         .copy(this.originalThirdPersonReference);
-    }
-    else {
+    } else {
       this.originalThirdPersonReference.set(0, 2.5, -4);
     }
 
   },
   Tick: function(dTime) {
-
     this.sendDataTimeout -= dTime;
-
-
-
-
-    if ( this.mouseRayCastCheckTimeout > 0 ) this.mouseRayCastCheckTimeout -= dTime;
-
-
-
+    if (this.mouseRayCastCheckTimeout > 0) {
+      this.mouseRayCastCheckTimeout -= dTime;
+    }
 
     // Check for loot bags, chests, and vendors nearby
     var found = false;
-    for(var u=0;u<ironbane.unitList.length;u++) {
+    for (var u = 0; u < ironbane.unitList.length; u++) {
       var lootBag = ironbane.unitList[u];
 
-      if ( lootBag == this ) continue;
-
-      if ( lootBag instanceof Fighter && lootBag.id < 0 ) {
-        if ( lootBag.template.type != UnitTypeEnum.VENDOR ) continue;
+      if (lootBag === this) {
+        continue;
       }
-      else if ( !((lootBag instanceof LootBag) || (lootBag instanceof LootableMesh)) ) continue;
 
+      if (lootBag instanceof Fighter && lootBag.id < 0) {
+        if (lootBag.template.type !== UnitTypeEnum.VENDOR) {
+          continue;
+        }
+      } else if (!((lootBag instanceof LootBag) || (lootBag instanceof LootableMesh))) {
+        continue;
+      }
 
-      if ( this.InRangeOfUnit(lootBag, (lootBag instanceof LootableMesh) ? 2.0 : 1.0) ) {
+      if (this.InRangeOfUnit(lootBag, (lootBag instanceof LootableMesh) ? 2.0 : 1.0)) {
         found = lootBag;
       }
     }
 
-    if ( this.canLoot ) {
-      if ( !found ) {
+    if (this.canLoot) {
+      if (!found) {
         // Remove the loot bag
         $('#lootBag').hide();
 
 
         // Todo: remove the items via UI
-        for(var i=0;i<this.lootItems.length;i++){
+        for (var i = 0; i < this.lootItems.length; i++) {
           var lootItem = this.lootItems[i];
 
-          $('#li'+lootItem.id).remove();
+          $('#li' + lootItem.id).remove();
 
-          if ( currentHoverDiv == 'li'+lootItem.id ) $('#tooltip').hide();
+          if (currentHoverDiv == 'li' + lootItem.id) $('#tooltip').hide();
         }
 
         this.lootItems = [];
@@ -198,23 +236,22 @@ var Player = Fighter.extend({
 
         this.lootUnit = null;
 
-        if ( hudHandler.alertBoxActive ) {
+        if (hudHandler.alertBoxActive) {
           hudHandler.ReloadInventory();
           hudHandler.HideAlert();
         }
       }
-    }
-    else {
-      if ( found ) {
+    } else {
+      if (found) {
         // Show the loot bag
         $('#lootBag').show();
 
         // Make a request for the items and update the UI when we receive them
-        socketHandler.socket.emit('loot', found.id, function (reply) {
+        socketHandler.socket.emit('loot', found.id, function(reply) {
 
 
 
-          if ( ISDEF(reply.errmsg) ) {
+          if (ISDEF(reply.errmsg)) {
             hudHandler.MessageAlert(reply.errmsg);
             return;
           }
@@ -223,11 +260,10 @@ var Player = Fighter.extend({
           ironbane.player.lootItems = reply;
           hudHandler.MakeSlotItems(true);
 
-          if ( found.template.type == UnitTypeEnum.VENDOR ) {
-            $('div[id^="ls"]').attr("class","buyBarSlot");
-          }
-          else {
-            $('div[id^="ls"]').attr("class","lootBarSlot");
+          if (found.template.type == UnitTypeEnum.VENDOR) {
+            $('div[id^="ls"]').attr("class", "buyBarSlot");
+          } else {
+            $('div[id^="ls"]').attr("class", "lootBarSlot");
           }
         });
 
@@ -236,52 +272,27 @@ var Player = Fighter.extend({
         this.lootUnit = found;
       }
     }
-
-
-
-
-
-
-
-
-
-
-    var rotrad = (270-this.rotation.y) * (Math.PI/180);
+    var rotrad = (270 - this.rotation.y) * (Math.PI / 180);
     //rotrad = 0;
-
     var uc = this.thirdPersonReference.clone();
-
-
-    uc.multiplyScalar(0.5+(this.size*0.5));
-
-
-
-
-
-
-
-
-
+    uc.multiplyScalar(0.5 + (this.size * 0.5));
     var tx = ((uc.x * Math.cos(rotrad)) - (uc.z * Math.sin(rotrad)));
     var tz = ((uc.x * Math.sin(rotrad)) + (uc.z * Math.cos(rotrad)));
 
     uc.x = tx;
     uc.z = tz;
-
     var preTarget = this.position.clone().addSelf(uc);
-
-
     //        if ( this.mouseRayCastCheckTimeout <= 0 ) {
     this.UpdateMouseProjectedPosition();
     //            this.mouseRayCastCheckTimeout = 0.1;
     //        }
 
     var doCameraCheck = true;
-    if ( le("globalEnable") || le("chFlyMode") ) {
+    if (le("globalEnable") || le("chFlyMode")) {
       doCameraCheck = false;
     }
 
-    if ( doCameraCheck && !cinema.IsPlaying()) {
+    if (doCameraCheck && !cinema.IsPlaying()) {
 
 
       var needFirstPersonMode = false;
@@ -290,44 +301,43 @@ var Player = Fighter.extend({
       var ray = new THREE.Ray(this.position.clone().addSelf(new THREE.Vector3(0, 0.5, 0)), preTarget.clone().subSelf(this.position.clone()).normalize());
 
       var intersects = terrainHandler.RayTest(ray, {
-        testMeshesNearPosition:ironbane.camera.position,
+        testMeshesNearPosition: ironbane.camera.position,
         unitReference: this,
         unitRayName: "camera"
       });
 
-      if ( intersects.length > 0 ) {
+      if (intersects.length > 0) {
 
         var relativeDifference = intersects[0].distance;
         //
 
         //debug.SetWatch("camera col!", relativeDifference);
-        if ( !this.isLookingAround ) {
-          if ( relativeDifference < 2.5 ) {
+        if (!this.isLookingAround) {
+          if (relativeDifference < 2.5) {
             //manualLerp = true;
             //ironbane.camera.position.lerpSelf(this.position.clone().addSelf(new THREE.Vector3(0, 2, 0)), dTime*3);
             //ironbane.camera.position.y = this.position.y + 2;
 
             needFirstPersonMode = true;
 
-            switch(this.cameraStatus) {
+            switch (this.cameraStatus) {
               case CameraStatusEnum.ThirdPerson:
                 this.cameraStatus = CameraStatusEnum.ThirdPersonToFirstPersonTransition;
                 break;
             }
 
-          }
-          else {
-            this.thirdPersonReference.lerpSelf(this.originalThirdPersonReference, dTime*10);
+          } else {
+            this.thirdPersonReference.lerpSelf(this.originalThirdPersonReference, dTime * 10);
           }
         }
 
         relativeDifference = Math.min(relativeDifference, this.originalThirdPersonReference.length());
 
         uc.normalize();
-        uc.multiplyScalar(relativeDifference-1.0);
+        uc.multiplyScalar(relativeDifference - 1.0);
       }
-      if ( !needFirstPersonMode ) {
-        switch(this.cameraStatus) {
+      if (!needFirstPersonMode) {
+        switch (this.cameraStatus) {
           case CameraStatusEnum.FirstPerson:
           case CameraStatusEnum.ThirdPersonToFirstPersonTransition:
             this.cameraStatus = CameraStatusEnum.ThirdPerson;
@@ -346,40 +356,39 @@ var Player = Fighter.extend({
     //debug.SetWatch("manualLerp ", manualLerp );
 
 
-    var radians = (this.rotation.y + 90) * (Math.PI/180);
+    var radians = (this.rotation.y + 90) * (Math.PI / 180);
 
 
 
-    if ( !cinema.IsPlaying() ) {
+    if (!cinema.IsPlaying()) {
       // Set our position behind the playe
-      var firstPersonTarget = this.position.clone().addSelf(new THREE.Vector3(-Math.sin(radians)*0.001, 0, -Math.cos(radians)*0.001));
+      var firstPersonTarget = this.position.clone().addSelf(new THREE.Vector3(-Math.sin(radians) * 0.001, 0, -Math.cos(radians) * 0.001));
       firstPersonTarget.y += 1;
 
-      switch(this.cameraStatus) {
+      switch (this.cameraStatus) {
         case CameraStatusEnum.FirstPerson:
           ironbane.camera.position.copy(firstPersonTarget);
 
           break;
         case CameraStatusEnum.ThirdPersonToFirstPersonTransition:
-          ironbane.camera.position.lerpSelf(firstPersonTarget, dTime*10);
+          ironbane.camera.position.lerpSelf(firstPersonTarget, dTime * 10);
 
-          if ( (ironbane.camera.position.clone().subSelf(firstPersonTarget)).length() < 0.01 ) {
+          if ((ironbane.camera.position.clone().subSelf(firstPersonTarget)).length() < 0.01) {
             this.cameraStatus = CameraStatusEnum.FirstPerson;
           }
           break;
         case CameraStatusEnum.ThirdPerson:
           //ironbane.camera.position.copy(target);
-          ironbane.camera.position.lerpSelf(target, dTime*3);
+          ironbane.camera.position.lerpSelf(target, dTime * 3);
           break;
       }
 
       //debug.SetWatch("this.cameraStatus", this.cameraStatus);
 
       var lookAtTarget = null;
-      if ( this.cameraStatus != CameraStatusEnum.ThirdPerson ) {
+      if (this.cameraStatus != CameraStatusEnum.ThirdPerson) {
         lookAtTarget = this.position.clone().addSelf(new THREE.Vector3(Math.sin(radians), 1, Math.cos(radians)));
-      }
-      else {
+      } else {
         lookAtTarget = this.position.clone().addSelf(new THREE.Vector3(0, 1, 0));
 
       }
@@ -408,43 +417,47 @@ var Player = Fighter.extend({
     //        this.velocity.normalize();
     //        this.velocity.multiplyScalar(this.speed);
     this.slowWalk = false;
-    if( keyTracker[16] ){
+    if (keyTracker[16]) {
       this.slowWalk = true;
     }
 
     var rotSpeed = rotation_speed;
 
-    if ( this.slowWalk ) rotSpeed *= 1.5;
+    if (this.slowWalk) rotSpeed *= 1.5;
 
-    if ( this.canMove ) {
-      if(keyTracker[37]||keyTracker[65]){
+    if (this.canMove) {
+      if (keyTracker[37] || keyTracker[65]) {
         this.localRotationY += (rotSpeed * dTime);
       }
-      if(keyTracker[39]||keyTracker[68]){
+      if (keyTracker[39] || keyTracker[68]) {
         this.localRotationY -= (rotSpeed * dTime);
-      }//
+      } //
     }
 
 
 
-
-    if ( this.unitStandingOn ) {
+    if (this.unitStandingOn) {
       this.targetRotation.y = this.localRotationY + this.unitStandingOn.rotation.y;
+<<<<<<< Updated upstream
     }
     else {
       this.targetRotation.y = this.localRotationY;
+=======
+    } else {
+      this.targetRotation.y = this.localRotationY
+>>>>>>> Stashed changes
     }
     //
-    while ( this.targetRotation.y < 0 ) {
+    while (this.targetRotation.y < 0) {
       //this.rotation.y += 360;
       this.targetRotation.y += 360;
     }
-    while ( this.targetRotation.y > 360 ) {
+    while (this.targetRotation.y > 360) {
       //this.rotation.y -= 360;
       this.targetRotation.y -= 360;
     }
 
-    if ( !this.unitStandingOn ) {
+    if (!this.unitStandingOn) {
       this.localRotationY = this.targetRotation.y;
     }
 
@@ -456,27 +469,27 @@ var Player = Fighter.extend({
 
     var additionalCanMove = true;
 
-    if ( this.terrainAngle > 45 && this.position.y > GetZoneConfig('fluidLevel') ) additionalCanMove = false;
+    if (this.terrainAngle > 45 && this.position.y > GetZoneConfig('fluidLevel')) additionalCanMove = false;
 
 
     var inputVelocity = new THREE.Vector3();
 
-    if ( this.canMove && additionalCanMove ) {
-      if(keyTracker[38]||keyTracker[87]){
+    if (this.canMove && additionalCanMove) {
+      if (keyTracker[38] || keyTracker[87]) {
         inputVelocity.x += (Math.sin(radians) * unitAcceleration) * dTime;
         inputVelocity.z += (Math.cos(radians) * unitAcceleration) * dTime;
       }
-      if(keyTracker[40]||keyTracker[83]){
+      if (keyTracker[40] || keyTracker[83]) {
         inputVelocity.x += (Math.sin(radians) * -unitAcceleration) * dTime;
         inputVelocity.z += (Math.cos(radians) * -unitAcceleration) * dTime;
       }
-      if(keyTracker[81]){
-        inputVelocity.x -= (Math.sin(radians+(Math.PI/2)) * -unitAcceleration) * dTime;
-        inputVelocity.z -= (Math.cos(radians+(Math.PI/2)) * -unitAcceleration) * dTime;
+      if (keyTracker[81]) {
+        inputVelocity.x -= (Math.sin(radians + (Math.PI / 2)) * -unitAcceleration) * dTime;
+        inputVelocity.z -= (Math.cos(radians + (Math.PI / 2)) * -unitAcceleration) * dTime;
       }
-      if(keyTracker[69]){
-        inputVelocity.x += (Math.sin(radians+(Math.PI/2)) * -unitAcceleration) * dTime;
-        inputVelocity.z += (Math.cos(radians+(Math.PI/2)) * -unitAcceleration) * dTime;
+      if (keyTracker[69]) {
+        inputVelocity.x += (Math.sin(radians + (Math.PI / 2)) * -unitAcceleration) * dTime;
+        inputVelocity.z += (Math.cos(radians + (Math.PI / 2)) * -unitAcceleration) * dTime;
       }
     }
 
@@ -505,13 +518,12 @@ var Player = Fighter.extend({
 
     //}
     //&& this.slopeAngle <= 60
-    if ( this.canMove ) {
-      if(keyTracker[32]){
+    if (this.canMove) {
+      if (keyTracker[32]) {
 
-        if ( showEditor && levelEditor.editorGUI.chFlyMode ) {
+        if (showEditor && levelEditor.editorGUI.chFlyMode) {
           this.localPosition.y += dTime * 5;
-        }
-        else if ( this.lastJumpTimer <= 0 && this.isTouchingGround ) {
+        } else if (this.lastJumpTimer <= 0 && this.isTouchingGround) {
           this.Jump();
           socketHandler.socket.emit('doJump', {});
         }
@@ -521,9 +533,9 @@ var Player = Fighter.extend({
           socketHandler.socket.emit('doJump', {});
         }
       }
-      if(keyTracker[16]){
+      if (keyTracker[16]) {
 
-        if ( showEditor && levelEditor.editorGUI.chFlyMode ) {
+        if (showEditor && levelEditor.editorGUI.chFlyMode) {
           this.localPosition.y -= dTime * 5;
         }
       }
@@ -534,7 +546,7 @@ var Player = Fighter.extend({
     var oldvy = this.velocity.y;
 
     this.velocity.y = 0;
-    var vlength =  this.velocity.length();
+    var vlength = this.velocity.length();
 
     var frictionLength = 6.5 * dTime;
 
@@ -543,25 +555,25 @@ var Player = Fighter.extend({
 
     var maxSpeed = rotTest < -0.2 ? unitMaxSpeedBackwards : unitMaxSpeed;
 
-    if ( this.slowWalk ) maxSpeed = 2;
+    if (this.slowWalk) maxSpeed = 2;
 
-    if ( le("chSpeed") ) maxSpeed *= 10;
+    if (le("chSpeed")) maxSpeed *= 10;
 
 
     //if ( zones[terrainHandler.zone]['enableFluid'] ) {
-    if ( GetZoneConfig('enableFluid') ) {
+    if (GetZoneConfig('enableFluid')) {
       // Make some water splashes when we're moving under the fluidLevel
 
-      if ( this.position.y < GetZoneConfig('fluidLevel')  ) {
+      if (this.position.y < GetZoneConfig('fluidLevel')) {
 
 
-        var waterFrictionVector = this.velocity.clone().normalize().multiplyScalar(dTime*10);
+        var waterFrictionVector = this.velocity.clone().normalize().multiplyScalar(dTime * 10);
 
         //if ( vlength > 3 ) {
         this.velocity.subSelf(waterFrictionVector);
         //}
 
-        maxSpeed -= (GetZoneConfig('fluidLevel')-this.position.y)*4;
+        maxSpeed -= (GetZoneConfig('fluidLevel') - this.position.y) * 4;
         maxSpeed = Math.max(2, maxSpeed);
 
       }
@@ -576,30 +588,26 @@ var Player = Fighter.extend({
     // Apply friction
     var frictionVector = this.velocity.clone().normalize().multiplyScalar(frictionLength);
 
-    if ( vlength > frictionLength ) {
+    if (vlength > frictionLength) {
       this.velocity.subSelf(frictionVector);
-    }
-    else {
+    } else {
       this.velocity.x = 0;
       this.velocity.z = 0;
     }
 
     // Limit velocity
-    if ( vlength > maxSpeed ) {
+    if (vlength > maxSpeed) {
       this.velocity.normalize();
       this.velocity.multiplyScalar(maxSpeed);
     }
 
     this.speed = this.velocity.length();
 
-    if ( this.speed <= 0.1 ) {
+    if (this.speed <= 0.1) {
       this.speed = 0;
     }
 
     this.velocity.y = oldvy;
-
-
-
 
 
 
@@ -612,8 +620,8 @@ var Player = Fighter.extend({
 
 
 
-    if ( socketHandler.serverOnline ) {
-      if ( this.sendDataTimeout <= 0.0 ) {
+    if (socketHandler.serverOnline) {
+      if (this.sendDataTimeout <= 0.0) {
         this.sendDataTimeout = 0.25;
         this.SendData();
       }
@@ -630,40 +638,38 @@ var Player = Fighter.extend({
 
 
 
-
     // this.targetAimHelperTexture = "";
 
 
     // Move the reddish aim mesh
-    if ( currentMouseToWorldData ) {
+    if (currentMouseToWorldData) {
 
       var point = ConvertVector3(currentMouseToWorldData.point);
 
 
       // Check the aim range
       var weapon = this.GetEquippedWeapon();
-      if ( weapon ) {
+      if (weapon) {
         var template = items[weapon.template];
         var range = WeaponRanges[template.subtype];
         var playerToPoint = point.clone().subSelf(this.position);
 
 
-          if ( template['type'] == 'weapon') {
-            if ( template['subtype'] == 'bow' || template['subtype'] == 'staff' ) {
-              this.targetAimTexture = "aim_bow";
-            }
-            else {
-              this.targetAimTexture = "aim_bow";
-            }
+        if (template['type'] == 'weapon') {
+          if (template['subtype'] == 'bow' || template['subtype'] == 'staff') {
+            this.targetAimTexture = "aim_bow";
+          } else {
+            this.targetAimTexture = "aim_bow";
           }
+        }
 
 
 
         var inFOV = this.heading.dot(playerToPoint.clone().normalize()) > -0.5;
 
-        if ( !(inFOV && range*range > playerToPoint.lengthSq()) ) {
+        if (!(inFOV && range * range > playerToPoint.lengthSq())) {
           // Forbidden, but add a helper nevertheless
-          if ( inFOV ) {
+          if (inFOV) {
             // this.targetAimHelperTexture = this.targetAimTexture;
             this.aimHelperMeshPosition = this.position.clone()
               .addSelf(playerToPoint.normalize().multiplyScalar(range));
@@ -690,18 +696,12 @@ var Player = Fighter.extend({
 
 
 
-        }
-        else {
+        } else {
 
-          _.each(ironbane.unitList, function(u){
-            if ( u instanceof Fighter
-              && u != ironbane.player
-              && u.InRangeOfPosition(point, 1)
-              && u.id < 0
-              && !u.template.friendly
-              && u.health > 0 ){
+          _.each(ironbane.unitList, function(u) {
+            if (u instanceof Fighter && u != ironbane.player && u.InRangeOfPosition(point, 1) && u.id < 0 && !u.template.friendly && u.health > 0) {
               // if ( ironbane.player.attackTimeout > 0.2 ) {
-                ironbane.player.targetAimTexture = "aim_close";
+              ironbane.player.targetAimTexture = "aim_close";
               // }
               // else {
               //   ironbane.player.targetAimTexture = "aim_close";
@@ -711,50 +711,49 @@ var Player = Fighter.extend({
 
         }
 
-        if ( this.attackTimeout > 0.5) {
+        if (this.attackTimeout > 0.5) {
           // if ( this.targetAimHelperTexture === "aim_close" ) {
           //   this.targetAimHelperTexture = "aim_close_fire";
           // }
           // if ( this.targetAimHelperTexture === "aim_bow" ) {
           //   this.targetAimHelperTexture = "aim_bow_fire";
           // }
-          if ( this.targetAimTexture === "aim_close" ) {
+          if (this.targetAimTexture === "aim_close") {
             this.targetAimTexture = "aim_close_fire";
           }
-          if ( this.targetAimTexture === "aim_bow" ) {
+          if (this.targetAimTexture === "aim_bow") {
             this.targetAimTexture = "aim_bow_fire";
           }
         }
 
-      }
-      else {
+      } else {
         this.targetAimTexture = "redglow";
       }
 
-      if ( le("globalEnable") ) {
+      if (le("globalEnable")) {
         this.targetAimTexture = "aim_editor";
         // this.targetAimHelperTexture = "";
       }
 
     }
 
-    if ( isHoveringHud || this.health <= 0 ) this.targetAimTexture = "blank";
+    if (isHoveringHud || this.health <= 0) this.targetAimTexture = "blank";
 
-     if ( this.aimTexture != this.targetAimTexture ) {
+    if (this.aimTexture != this.targetAimTexture) {
 
       this.DestroyAimMesh();
 
       this.aimTexture = this.targetAimTexture;
 
-      if ( this.aimTexture != "" ) {
+      if (this.aimTexture != "") {
         this.aimMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1, 1, 1),
-          textureHandler.GetTexture('plugins/game/images/misc/'+this.aimTexture+'.png', false, {
-            transparent:true,
-            alphaTest:0.1
-          }));
+          textureHandler.GetTexture('plugins/game/images/misc/' + this.aimTexture + '.png', false, {
+          transparent: true,
+          alphaTest: 0.1
+        }));
         //this.shadowMesh.geometry.dynamic = true;
 
-        this.aimMesh.rotation.x = -Math.PI/2;
+        this.aimMesh.rotation.x = -Math.PI / 2;
 
         this.aimMesh.position.copy(this.aimMeshPosition);
 
@@ -762,14 +761,12 @@ var Player = Fighter.extend({
       }
     }
 
-    if ( this.aimMesh && currentMouseToWorldData ) {
+    if (this.aimMesh && currentMouseToWorldData) {
       //this.aimMesh.position = point.addSelf(currentMouseToWorldData.face.normal.clone().normalize().multiplyScalar(0.05));
-      this.aimMeshPosition.lerpSelf(point.addSelf(currentMouseToWorldData.face.normal.clone().normalize().multiplyScalar(0.05)), dTime*20);
+      this.aimMeshPosition.lerpSelf(point.addSelf(currentMouseToWorldData.face.normal.clone().normalize().multiplyScalar(0.05)), dTime * 20);
       this.aimMesh.position.copy(this.aimMeshPosition);
       this.aimMesh.LookAt(currentMouseToWorldData.face.normal.clone().addSelf(this.aimMesh.position));
     }
-
-
 
 
 
@@ -796,14 +793,14 @@ var Player = Fighter.extend({
     //   }
     // }
 
-    if ( this.aimHelperMesh && currentMouseToWorldData ) {
+    if (this.aimHelperMesh && currentMouseToWorldData) {
       //this.aimHelperMesh.position = point.addSelf(currentMouseToWorldData.face.normal.clone().normalize().multiplyScalar(0.05));
       this.aimHelperMesh.position.copy(this.aimHelperMeshPosition);
       //this.aimHelperMesh.LookAt(new THREE.Vector3(0,1,0));
     }
 
 
-    if ( showEditor && levelEditor.editorGUI.chFlyMode ) {
+    if (showEditor && levelEditor.editorGUI.chFlyMode) {
       this.allowCheckGround = false;
     }
 
@@ -821,16 +818,16 @@ var Player = Fighter.extend({
     var ourpos = ironbane.player.position.clone().addSelf(new THREE.Vector3(0, 0.5, 0));
 
     // Do a raycast for each NPC
-    for(var u=0;u<ironbane.unitList.length;u++) {
+    for (var u = 0; u < ironbane.unitList.length; u++) {
       var unit = ironbane.unitList[u];
 
-      if ( unit instanceof Fighter && unit.InRangeOfUnit(ironbane.player, 30) && unit.id < 0 ) {
+      if (unit instanceof Fighter && unit.InRangeOfUnit(ironbane.player, 30) && unit.id < 0) {
 
 
 
-        var dir = unit.position.clone().addSelf(new THREE.Vector3(0, 0.5, 0)).subSelf( ourpos );
+        var dir = unit.position.clone().addSelf(new THREE.Vector3(0, 0.5, 0)).subSelf(ourpos);
         var distance = dir.length();
-        var ray = new THREE.Ray( ourpos, dir.clone().normalize(), 0, distance );
+        var ray = new THREE.Ray(ourpos, dir.clone().normalize(), 0, distance);
 
 
         var intersects = terrainHandler.RayTest(ray, {
@@ -855,7 +852,7 @@ var Player = Fighter.extend({
       los: npcLOS
     };
 
-    if ( this.unitStandingOn ) data.u = this.unitStandingOn.id;
+    if (this.unitStandingOn) data.u = this.unitStandingOn.id;
 
     socketHandler.socket.emit('playerdata', data);
 
@@ -863,23 +860,23 @@ var Player = Fighter.extend({
   },
   AttemptAttack: function(position) {
 
-    if ( this.attackTimeout > 0.0 ) return;
+    if (this.attackTimeout > 0.0) return;
 
     var rotTest = this.heading.dot(ConvertVector3(position).subSelf(this.position).normalize());
-    if ( rotTest < -0.5 ) return;
+    if (rotTest < -0.5) return;
 
     var weapon = this.GetEquippedWeapon();
 
-    if ( weapon ) {
+    if (weapon) {
       var template = items[weapon.template];
 
 
 
-      if ( template['type'] == 'weapon') {
+      if (template['type'] == 'weapon') {
 
         // Don't return if out of range, instead adjust the position where we're
         // shooting at
-        if ( DistanceSq(position, this.position) > Math.pow(WeaponRanges[template['subtype']], 2) ) {
+        if (DistanceSq(position, this.position) > Math.pow(WeaponRanges[template['subtype']], 2)) {
           var playerToPoint = position.clone().subSelf(this.position);
           playerToPoint.normalize().multiplyScalar(WeaponRanges[template['subtype']]);
           position = this.position.clone().addSelf(playerToPoint);
@@ -900,17 +897,17 @@ var Player = Fighter.extend({
 
         // Send the projectile
         socketHandler.socket.emit('addProjectile', {
-          s:this.position.clone().Round(2),
-          t:position.clone().Round(2),
-          w:weapon.id,
-          o:this.id,
-          sw:true
-        }, function (reply) {
+          s: this.position.clone().Round(2),
+          t: position.clone().Round(2),
+          w: weapon.id,
+          o: this.id,
+          sw: true
+        }, function(reply) {
 
-          if ( ISDEF(reply.errmsg) ) {
-              hudHandler.MessageAlert(reply.errmsg);
-              // hudHandler.ShowMenuScreen();
-              return;
+          if (ISDEF(reply.errmsg)) {
+            hudHandler.MessageAlert(reply.errmsg);
+            // hudHandler.ShowMenuScreen();
+            return;
           }
 
         });
@@ -923,16 +920,29 @@ var Player = Fighter.extend({
 
 
   },
+  splitItem: function(barIndex) {
+    if (this.health <= 0) {
+      bm('You are dead!');
+      return;
+    }
+
+    var item = hudHandler.FindItemBySlot(barIndex, false);
+    if (item) {
+      console.log('found item for splitting', item);
+    } else {
+      console.log('no such item found');
+    }
+  },
   UseItem: function(barIndex) {
 
-    if ( this.health <= 0 ) {
+    if (this.health <= 0) {
       bm("You are dead!");
       return;
     }
 
     // Check if an item is present
     var item = hudHandler.FindItemBySlot(barIndex, false);
-    if ( item ) {
+    if (item) {
 
       var template = items[item.template];
 
@@ -952,23 +962,23 @@ var Player = Fighter.extend({
 
 
           // Update the HUD
-          (function(item, template){
-            $('#ii'+item.id).animate({
-              width:2,
-              height:2,
-              top:'+=25',
-              left:'+=25'
+          (function(item, template) {
+            $('#ii' + item.id).animate({
+              width: 2,
+              height: 2,
+              top: '+=25',
+              left: '+=25'
             }, 400, function() {
 
 
-              if ( currentHoverDiv == 'ii'+item.id ) {
+              if (currentHoverDiv == 'ii' + item.id) {
                 $('#tooltip').hide();
-                setTimeout(function(){
+                setTimeout(function() {
                   $('#tooltip').hide();
                 }, 500);
               }
 
-              $('#ii'+item.id).remove();
+              $('#ii' + item.id).remove();
 
 
 
@@ -988,9 +998,8 @@ var Player = Fighter.extend({
         case 'armor':
 
           _.each(socketHandler.playerData.items, function(i) {
-            if ( items[i.template].type == 'armor' &&
-              items[i.template].subtype == items[item.template].subtype
-              && i != item) {
+            if (items[i.template].type == 'armor' &&
+              items[i.template].subtype == items[item.template].subtype && i != item) {
               i.equipped = 0;
             }
           });
@@ -1010,12 +1019,12 @@ var Player = Fighter.extend({
 
           // Unequip all weapons we already have equipped (since we can have only one active)
           _.each(socketHandler.playerData.items, function(i) {
-            if ( (items[i.template].type == 'weapon' || items[i.template].type == 'tool') && i != item) {
+            if ((items[i.template].type == 'weapon' || items[i.template].type == 'tool') && i != item) {
               i.equipped = 0;
 
-              if ( items[i.template].subtype == 'book' ) hudHandler.HideBook();
+              if (items[i.template].subtype == 'book') hudHandler.HideBook();
 
-              if ( items[i.template].subtype == 'map' ) hudHandler.HideMap();
+              if (items[i.template].subtype == 'map') hudHandler.HideMap();
 
             }
           });
@@ -1035,12 +1044,12 @@ var Player = Fighter.extend({
 
             case 'book':
 
-              if ( item.equipped ) {
-                $.post('gamehandler.php?action=book&book='+item.attr1, function(string) {
-                  if ( !item.equipped ) return;
+              if (item.equipped) {
+                $.post('gamehandler.php?action=book&book=' + item.attr1, function(string) {
+                  if (!item.equipped) return;
                   data = JSON.parse(string);
 
-                  if ( ISDEF(data.errmsg) ) {
+                  if (ISDEF(data.errmsg)) {
                     hudHandler.MessageAlert(data.errmsg);
                     return;
                   }
@@ -1048,8 +1057,7 @@ var Player = Fighter.extend({
                   hudHandler.ShowBook(data.text);
 
                 });
-              }
-              else {
+              } else {
                 hudHandler.HideBook();
               }
 
@@ -1058,10 +1066,9 @@ var Player = Fighter.extend({
               break;
             case 'map':
 
-              if ( item.equipped ) {
-                  hudHandler.ShowMap();
-              }
-              else {
+              if (item.equipped) {
+                hudHandler.ShowMap();
+              } else {
                 hudHandler.HideMap();
               }
 
@@ -1083,9 +1090,9 @@ var Player = Fighter.extend({
 
       hudHandler.UpdateEquippedItems();
 
-      socketHandler.socket.emit('useItem', barIndex, function (reply) {
+      socketHandler.socket.emit('useItem', barIndex, function(reply) {
 
-        if ( ISDEF(reply.errmsg) ) {
+        if (ISDEF(reply.errmsg)) {
           hudHandler.ReloadInventory();
           hudHandler.MessageAlert(reply.errmsg);
           return;
@@ -1100,12 +1107,12 @@ var Player = Fighter.extend({
   },
   GetEquippedWeapon: function() {
 
-    for(var i=0;i<socketHandler.playerData.items.length;i++) {
+    for (var i = 0; i < socketHandler.playerData.items.length; i++) {
       var item = socketHandler.playerData.items[i];
 
       var template = items[item.template];
 
-      if ( item.equipped && (template.type == 'weapon' || template.type == 'tool')) {
+      if (item.equipped && (template.type == 'weapon' || template.type == 'tool')) {
         return item;
       }
     }
@@ -1121,14 +1128,14 @@ var Player = Fighter.extend({
     this.appearance.body = 0;
     this.appearance.feet = 0;
 
-    for(var i=0;i<socketHandler.playerData.items.length;i++) {
+    for (var i = 0; i < socketHandler.playerData.items.length; i++) {
       var item = socketHandler.playerData.items[i];
 
       var template = items[item.template];
 
-      if ( item.equipped ) {
+      if (item.equipped) {
 
-        if ( template.type == 'armor' ) {
+        if (template.type == 'armor') {
 
           switch (template.subtype) {
             case 'head':
@@ -1150,15 +1157,15 @@ var Player = Fighter.extend({
 
   },
   UpdateMouseProjectedPosition: function() {
-    if ( !ironbane.player ) return;
+    if (!ironbane.player) return;
 
-    var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 );
-    ironbane.projector.unprojectVector( vector, ironbane.camera );
+    var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+    ironbane.projector.unprojectVector(vector, ironbane.camera);
 
-    var ray = new THREE.Ray( ironbane.camera.position, vector.subSelf( ironbane.camera.position ).normalize() );
+    var ray = new THREE.Ray(ironbane.camera.position, vector.subSelf(ironbane.camera.position).normalize());
 
     var intersects = terrainHandler.RayTest(ray, {
-      testMeshesNearPosition:this.position,
+      testMeshesNearPosition: this.position,
       extraRange: 20,
 
       unitReference: this,
@@ -1169,8 +1176,7 @@ var Player = Fighter.extend({
 
     if (intersects.length > 0) {
       currentMouseToWorldData = intersects[0];
-    }
-    else {
+    } else {
       currentMouseToWorldData = null;
     }
 
@@ -1184,7 +1190,7 @@ var Player = Fighter.extend({
     //            sw("currentMouseToWorldData.point", currentMouseToWorldData.point);
     //            }
 
-    if ( le("globalEnable") && lastMouseToWorldData != currentMouseToWorldData ) {
+    if (le("globalEnable") && lastMouseToWorldData != currentMouseToWorldData) {
       levelEditor.BuildPreviewBuildMesh();
     }
 

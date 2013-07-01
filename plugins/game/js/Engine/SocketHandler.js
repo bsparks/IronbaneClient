@@ -411,9 +411,9 @@ var SocketHandler = Class.extend({
         this.socket.on('lootFromBag', function(data) {
             // occurs when someone nearby loots from a bag
             // refresh the bag
-            console.log('lootFromBag REPLY:', data);
+            //console.log('lootFromBag REPLY:', data);
             hudHandler.ReloadInventory();
-            if (ironbane.player.canLoot) {
+            if (ironbane.player.lootUnit === data.bag && ironbane.player.canLoot) {
                 ironbane.player.lootItems = data.loot;
             }
         });
@@ -450,11 +450,7 @@ var SocketHandler = Class.extend({
 
                         hudHandler.ShowHUD();
                         hudHandler.MakeHealthBar(true);
-
-
                         hudHandler.ReloadInventory();
-
-
                     });
 
 
